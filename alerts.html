@@ -4,10 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather Alerts - WeathCast</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         :root {
             --blur-medium: 20px;
             --border-glass-bright: 1px solid rgba(255, 255, 255, 0.35);
@@ -20,160 +19,111 @@
             --alert-moderate: #ffa502;
             --alert-minor: #7bed9f;
         }
-
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Jost', sans-serif;
             min-height: 100vh;
             background: linear-gradient(180deg, #76B8FF 0%, #4A8AD4 40%, #29477C 100%);
             background-attachment: fixed;
             color: var(--text-primary);
-            overflow-x: hidden;
         }
-
-        .bg-aurora {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none; z-index: 0;
-        }
-
+        .bg-aurora { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
         .bg-aurora::before {
             content: ''; position: absolute; inset: 0;
-            background: 
-                radial-gradient(ellipse 90% 50% at 30% 10%, rgba(255, 255, 255, 0.35) 0%, transparent 50%),
-                radial-gradient(ellipse 70% 40% at 75% 20%, rgba(173, 216, 255, 0.3) 0%, transparent 50%),
-                radial-gradient(ellipse 80% 60% at 20% 70%, rgba(65, 105, 180, 0.25) 0%, transparent 50%);
+            background: radial-gradient(ellipse 90% 50% at 30% 10%, rgba(255,255,255,0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse 70% 40% at 75% 20%, rgba(173,216,255,0.2) 0%, transparent 50%),
+                        radial-gradient(ellipse 80% 60% at 20% 70%, rgba(65,105,180,0.2) 0%, transparent 50%);
             animation: auroraPulse 15s ease-in-out infinite;
         }
-
-        @keyframes auroraPulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.9; transform: scale(1.02); }
-        }
-
+        @keyframes auroraPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.9; } }
         .glass-etching {
             position: fixed; inset: 0;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
             opacity: 0.03; pointer-events: none; z-index: 0;
         }
-
-        .container { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 20px; }
-
+        .container { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 20px; padding-top: 110px; padding-bottom: 60px; }
         .glass-card {
             background: rgba(255, 255, 255, 0.12);
-            backdrop-filter: blur(var(--blur-medium));
-            -webkit-backdrop-filter: blur(var(--blur-medium));
-            border: var(--border-glass-bright);
-            border-radius: 24px;
-            box-shadow: var(--shadow-glass);
+            backdrop-filter: blur(var(--blur-medium)); -webkit-backdrop-filter: blur(var(--blur-medium));
+            border: var(--border-glass-bright); border-radius: 24px; box-shadow: var(--shadow-glass);
             position: relative; overflow: hidden;
         }
-
         .glass-card::before {
             content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            pointer-events: none; z-index: 1;
         }
-
         header {
-            padding: 16px 28px; margin-bottom: 30px;
-            display: flex; align-items: center; justify-content: space-between;
-            animation: fadeInDown 0.8s ease-out;
+            position: fixed; top: 20px; left: 20px; right: 20px; max-width: 1160px; margin: 0 auto;
+            padding: 16px 28px; display: flex; align-items: center; justify-content: space-between;
+            z-index: 1000; animation: fadeInDown 0.8s ease-out;
         }
-
         @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
-
         .header-left { display: flex; align-items: center; gap: 40px; }
-        .logo { height: 48px; filter: drop-shadow(0 4px 12px rgba(41, 71, 124, 0.3)); transition: transform 0.3s ease; }
+        .logo { height: 48px; filter: drop-shadow(0 4px 12px rgba(41,71,124,0.3)); transition: transform 0.3s; }
         .logo:hover { transform: scale(1.05); }
-        .nav-links { display: flex; align-items: center; gap: 6px; }
-
-        .nav-link {
-            color: rgba(255, 255, 255, 0.8); text-decoration: none;
-            font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600;
-            padding: 12px 20px; border-radius: 14px; transition: all 0.3s ease;
-            position: relative; letter-spacing: 0.3px;
-        }
-
-        .nav-link:hover { color: white; background: rgba(255, 255, 255, 0.12); }
-        .nav-link.active { color: white; background: rgba(255, 255, 255, 0.18); }
-        .nav-link.active::after {
-            content: ''; position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
-            width: 20px; height: 3px; background: white; border-radius: 2px;
-        }
-
+        .nav-links { display: flex; gap: 6px; }
+        .nav-link { color: rgba(255,255,255,0.8); text-decoration: none; font-size: 15px; font-weight: 600; padding: 12px 20px; border-radius: 14px; transition: all 0.3s; position: relative; }
+        .nav-link:hover { color: white; background: rgba(255,255,255,0.12); }
+        .nav-link.active { color: white; background: rgba(255,255,255,0.18); }
+        .nav-link.active::after { content: ''; position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 20px; height: 3px; background: white; border-radius: 2px; }
         .nav-link-badge { position: relative; }
-        .badge {
-            position: absolute; top: 6px; right: 6px; width: 8px; height: 8px;
-            background: #ff4757; border-radius: 50%; border: 2px solid rgba(118, 184, 255, 0.6);
-            animation: pulse-badge 2s infinite;
-        }
-
+        .badge { position: absolute; top: 6px; right: 6px; width: 8px; height: 8px; background: #ff4757; border-radius: 50%; border: 2px solid rgba(118,184,255,0.6); animation: pulse-badge 2s infinite; }
         @keyframes pulse-badge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
-
-        .mobile-menu-btn {
-            display: none; background: rgba(255, 255, 255, 0.12);
-            border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 12px;
-            padding: 10px; cursor: pointer; color: white;
-        }
+        .mobile-menu-btn { display: none; background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.18); border-radius: 12px; padding: 10px; cursor: pointer; color: white; }
         .mobile-menu-btn svg { width: 24px; height: 24px; }
 
-        .page-title { text-align: center; margin-bottom: 30px; animation: fadeInUp 0.8s ease-out; }
-        .page-title h1 {
-            font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 800;
-            margin-bottom: 12px; text-shadow: 0 4px 20px rgba(41, 71, 124, 0.3);
-        }
+        .page-title { text-align: center; margin-bottom: 25px; animation: fadeInUp 0.8s ease-out; }
+        .page-title h1 { font-size: 38px; font-weight: 700; margin-bottom: 10px; text-shadow: 0 4px 20px rgba(41,71,124,0.3); }
         .page-title p { font-size: 16px; color: var(--text-secondary); }
-
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
 
-        .location-section { max-width: 600px; margin: 0 auto 30px; padding: 22px; animation: fadeInUp 0.8s ease-out 0.1s both; }
+        /* Centered Search */
+        .search-section { max-width: 700px; margin: 0 auto 30px; padding: 14px; animation: fadeInUp 0.8s ease-out 0.1s both; }
         .search-wrapper { display: flex; gap: 12px; }
         .search-input {
-            flex: 1; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 14px; padding: 15px 22px; font-size: 15px;
-            font-family: 'Outfit', sans-serif; color: white; transition: all 0.3s ease;
+            flex: 1; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px; padding: 16px 24px; font-size: 16px; font-family: 'Jost', sans-serif;
+            color: var(--text-primary); transition: all 0.3s;
         }
-        .search-input::placeholder { color: rgba(255, 255, 255, 0.5); }
-        .search-input:focus { outline: none; background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.4); }
-
+        .search-input::placeholder { color: rgba(255,255,255,0.5); }
+        .search-input:focus { outline: none; background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.4); }
         .search-btn {
-            background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.25);
-            color: white; font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700;
-            padding: 15px 28px; border-radius: 14px; cursor: pointer; transition: all 0.3s ease;
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.25);
+            color: white; font-family: 'Jost', sans-serif; font-size: 15px; font-weight: 600;
+            padding: 16px 28px; border-radius: 16px; cursor: pointer; transition: all 0.3s;
             display: flex; align-items: center; gap: 8px;
         }
-        .search-btn:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-2px); }
+        .search-btn:hover { background: rgba(255,255,255,0.3); transform: translateY(-2px); }
         .search-btn svg { width: 20px; height: 20px; }
 
         .current-location {
             display: none; align-items: center; justify-content: center; gap: 10px;
-            margin-top: 16px; padding: 14px 20px; background: rgba(255, 255, 255, 0.1);
+            margin-top: 16px; padding: 12px 18px; background: rgba(255,255,255,0.1);
             border-radius: 12px; font-size: 14px;
         }
         .current-location svg { width: 18px; height: 18px; }
 
         .alert-stats { display: none; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; animation: fadeInUp 0.8s ease-out 0.2s both; }
-        .stat-card { padding: 22px; text-align: center; transition: transform 0.3s ease; }
+        .stat-card { padding: 22px; text-align: center; transition: transform 0.3s; }
         .stat-card:hover { transform: translateY(-4px); }
-        .stat-icon {
-            width: 44px; height: 44px; margin: 0 auto 12px; border-radius: 12px;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .stat-icon { width: 44px; height: 44px; margin: 0 auto 12px; border-radius: 12px; display: flex; align-items: center; justify-content: center; }
         .stat-icon svg { width: 22px; height: 22px; }
-        .stat-icon.extreme { background: rgba(255, 71, 87, 0.25); color: var(--alert-extreme); }
-        .stat-icon.severe { background: rgba(255, 107, 53, 0.25); color: var(--alert-severe); }
-        .stat-icon.moderate { background: rgba(255, 165, 2, 0.25); color: var(--alert-moderate); }
-        .stat-icon.minor { background: rgba(123, 237, 159, 0.25); color: var(--alert-minor); }
-        .stat-value { font-family: 'Syne', sans-serif; font-size: 30px; font-weight: 800; margin-bottom: 4px; }
+        .stat-icon.extreme { background: rgba(255,71,87,0.25); color: var(--alert-extreme); }
+        .stat-icon.severe { background: rgba(255,107,53,0.25); color: var(--alert-severe); }
+        .stat-icon.moderate { background: rgba(255,165,2,0.25); color: var(--alert-moderate); }
+        .stat-icon.minor { background: rgba(123,237,159,0.25); color: var(--alert-minor); }
+        .stat-value { font-size: 30px; font-weight: 700; margin-bottom: 4px; }
         .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
 
         .alert-filters { display: none; flex-wrap: wrap; gap: 10px; margin-bottom: 25px; animation: fadeInUp 0.8s ease-out 0.3s both; }
         .filter-btn {
-            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
-            color: white; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
-            padding: 11px 20px; border-radius: 12px; cursor: pointer; transition: all 0.3s ease;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+            color: white; font-family: 'Jost', sans-serif; font-size: 14px; font-weight: 600;
+            padding: 12px 20px; border-radius: 14px; cursor: pointer; transition: all 0.3s;
             display: flex; align-items: center; gap: 8px;
         }
-        .filter-btn:hover { background: rgba(255, 255, 255, 0.2); }
-        .filter-btn.active { background: rgba(255, 255, 255, 0.25); border-color: rgba(255, 255, 255, 0.4); }
+        .filter-btn:hover { background: rgba(255,255,255,0.2); }
+        .filter-btn.active { background: rgba(255,255,255,0.25); border-color: rgba(255,255,255,0.4); }
         .filter-btn .dot { width: 8px; height: 8px; border-radius: 50%; }
         .filter-btn .dot.extreme { background: var(--alert-extreme); }
         .filter-btn .dot.severe { background: var(--alert-severe); }
@@ -182,27 +132,21 @@
 
         .alerts-list { display: flex; flex-direction: column; gap: 16px; }
 
-        .alert-card { padding: 0; cursor: pointer; transition: all 0.4s ease; }
+        .alert-card { padding: 0; cursor: pointer; transition: all 0.4s; }
         .alert-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
 
-        .alert-header { display: flex; align-items: center; gap: 16px; padding: 22px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); }
-        .alert-severity {
-            width: 52px; height: 52px; border-radius: 14px;
-            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
+        .alert-header { display: flex; align-items: center; gap: 16px; padding: 22px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .alert-severity { width: 52px; height: 52px; border-radius: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
         .alert-severity svg { width: 26px; height: 26px; }
-        .alert-severity.extreme { background: rgba(255, 71, 87, 0.25); color: var(--alert-extreme); }
-        .alert-severity.severe { background: rgba(255, 107, 53, 0.25); color: var(--alert-severe); }
-        .alert-severity.moderate { background: rgba(255, 165, 2, 0.25); color: var(--alert-moderate); }
-        .alert-severity.minor { background: rgba(123, 237, 159, 0.25); color: var(--alert-minor); }
+        .alert-severity.extreme { background: rgba(255,71,87,0.25); color: var(--alert-extreme); }
+        .alert-severity.severe { background: rgba(255,107,53,0.25); color: var(--alert-severe); }
+        .alert-severity.moderate { background: rgba(255,165,2,0.25); color: var(--alert-moderate); }
+        .alert-severity.minor { background: rgba(123,237,159,0.25); color: var(--alert-minor); }
 
         .alert-info { flex: 1; }
         .alert-type { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
-        .alert-type h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; }
-        .severity-badge {
-            font-family: 'Syne', sans-serif; font-size: 10px; font-weight: 700;
-            text-transform: uppercase; padding: 5px 12px; border-radius: 8px; letter-spacing: 0.5px;
-        }
+        .alert-type h3 { font-size: 18px; font-weight: 700; }
+        .severity-badge { font-size: 10px; font-weight: 700; text-transform: uppercase; padding: 5px 12px; border-radius: 8px; letter-spacing: 0.5px; }
         .severity-badge.extreme { background: var(--alert-extreme); }
         .severity-badge.severe { background: var(--alert-severe); }
         .severity-badge.moderate { background: var(--alert-moderate); color: #333; }
@@ -213,12 +157,12 @@
 
         .alert-time { text-align: right; flex-shrink: 0; }
         .alert-time-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
-        .alert-time-value { font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600; }
+        .alert-time-value { font-size: 14px; font-weight: 600; }
 
-        .expand-icon { width: 24px; height: 24px; transition: transform 0.3s ease; }
+        .expand-icon { width: 24px; height: 24px; transition: transform 0.3s; }
         .alert-card.expanded .expand-icon { transform: rotate(180deg); }
 
-        .alert-body { max-height: 0; overflow: hidden; padding: 0 22px; transition: all 0.3s ease; }
+        .alert-body { max-height: 0; overflow: hidden; padding: 0 22px; transition: all 0.3s; }
         .alert-card.expanded .alert-body { max-height: 400px; padding: 22px; }
         .alert-description { font-size: 14px; line-height: 1.8; color: var(--text-secondary); margin-bottom: 16px; }
 
@@ -234,73 +178,46 @@
 
         .no-alerts, .initial-state { text-align: center; padding: 70px 20px; animation: fadeInUp 0.8s ease-out; }
         .no-alerts svg, .initial-state svg { width: 90px; height: 90px; margin-bottom: 22px; opacity: 0.5; }
-        .no-alerts h3, .initial-state h3 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 10px; }
+        .no-alerts h3, .initial-state h3 { font-size: 22px; font-weight: 700; margin-bottom: 10px; }
         .no-alerts p, .initial-state p { font-size: 15px; color: var(--text-secondary); }
-
-        .subscribe-section {
-            margin-top: 45px; padding: 35px; text-align: center;
-            animation: fadeInUp 0.8s ease-out 0.5s both;
-        }
-        .subscribe-section h3 { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; margin-bottom: 12px; }
-        .subscribe-section p { font-size: 14px; color: var(--text-secondary); margin-bottom: 22px; }
-        .subscribe-form { display: flex; gap: 12px; max-width: 450px; margin: 0 auto; }
-        .subscribe-input {
-            flex: 1; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 14px; padding: 15px 20px; font-size: 14px;
-            font-family: 'Outfit', sans-serif; color: white;
-        }
-        .subscribe-input::placeholder { color: rgba(255, 255, 255, 0.5); }
-        .subscribe-input:focus { outline: none; border-color: rgba(255, 255, 255, 0.4); }
-        .subscribe-btn {
-            background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.25);
-            color: white; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
-            padding: 15px 28px; border-radius: 14px; cursor: pointer; transition: all 0.3s ease;
-        }
-        .subscribe-btn:hover { background: rgba(255, 255, 255, 0.3); }
-
-        footer { text-align: center; padding: 35px; color: var(--text-secondary); font-size: 13px; }
-        footer a { color: var(--text-primary); text-decoration: none; font-weight: 500; }
 
         @media (max-width: 768px) {
             .nav-links { display: none; }
             .mobile-menu-btn { display: flex; }
-            header { padding: 14px 20px; }
+            header { top: 10px; left: 10px; right: 10px; padding: 14px 20px; }
+            .container { padding-top: 90px; }
             .logo { height: 40px; }
             .page-title h1 { font-size: 28px; }
             .search-wrapper { flex-direction: column; }
             .alert-stats { grid-template-columns: repeat(2, 1fr); }
             .alert-header { flex-wrap: wrap; }
             .alert-time { width: 100%; text-align: left; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.1); }
-            .subscribe-form { flex-direction: column; }
         }
     </style>
 </head>
 <body>
     <div class="bg-aurora"></div>
     <div class="glass-etching"></div>
+    <header class="glass-card">
+        <div class="header-left">
+            <a href="index.html"><img src="logo.png" alt="WeathCast" class="logo"></a>
+            <nav class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="features.html" class="nav-link">Features</a>
+                <a href="maps.html" class="nav-link">Weather Maps</a>
+                <a href="alerts.html" class="nav-link active nav-link-badge">Alerts<span class="badge"></span></a>
+            </nav>
+        </div>
+        <button class="mobile-menu-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg></button>
+    </header>
 
     <div class="container">
-        <header class="glass-card">
-            <div class="header-left">
-                <a href="index.html"><img src="logo.png" alt="WeathCast" class="logo"></a>
-                <nav class="nav-links">
-                    <a href="index.html" class="nav-link">Home</a>
-                    <a href="features.html" class="nav-link">Features</a>
-                    <a href="maps.html" class="nav-link">Weather Maps</a>
-                    <a href="alerts.html" class="nav-link active nav-link-badge">Alerts<span class="badge"></span></a>
-                </nav>
-            </div>
-            <button class="mobile-menu-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-            </button>
-        </header>
-
         <div class="page-title">
             <h1>⚠️ Weather Alerts</h1>
             <p>Stay informed about severe weather conditions in your area</p>
         </div>
 
-        <div class="location-section glass-card">
+        <section class="search-section glass-card">
             <div class="search-wrapper">
                 <input type="text" class="search-input" id="locationInput" placeholder="Enter city or region...">
                 <button class="search-btn" id="searchBtn">
@@ -312,7 +229,7 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
                 <span>Showing alerts for: <strong id="locationName">--</strong></span>
             </div>
-        </div>
+        </section>
 
         <div class="alert-stats" id="alertStats">
             <div class="stat-card glass-card">
@@ -360,30 +277,152 @@
             <h3>Check Weather Alerts</h3>
             <p>Enter a city or region above to view active weather alerts and warnings.</p>
         </div>
-
-        <div class="subscribe-section glass-card">
-            <h3>🔔 Get Alert Notifications</h3>
-            <p>Subscribe to receive instant notifications when severe weather is expected in your area.</p>
-            <form class="subscribe-form" id="subscribeForm">
-                <input type="email" class="subscribe-input" placeholder="Enter your email address" required>
-                <button type="submit" class="subscribe-btn">Subscribe</button>
-            </form>
-        </div>
-
-        <footer><p>Powered by <a href="https://openweathermap.org/">OpenWeatherMap</a></p></footer>
     </div>
 
     <script>
         const API_KEY = '4d8fb5b93d4af21d66a2948710284366';
-        const sampleAlerts = [
-            { event: "Thunderstorm Warning", severity: "severe", description: "Severe thunderstorm warning. Expect damaging winds up to 60 mph and large hail.", start: Date.now()/1000, end: Date.now()/1000 + 14400, sender: "National Weather Service", areas: "Metropolitan Area" },
-            { event: "Heat Advisory", severity: "moderate", description: "Heat advisory in effect. High temperatures expected to reach 102°F with heat index up to 110°F.", start: Date.now()/1000 + 3600, end: Date.now()/1000 + 32400, sender: "National Weather Service", areas: "City Center" },
-            { event: "Flash Flood Watch", severity: "moderate", description: "Flash flood watch for low-lying areas. Heavy rainfall of 2-4 inches expected.", start: Date.now()/1000, end: Date.now()/1000 + 43200, sender: "National Weather Service", areas: "River Valley" },
-            { event: "Wind Advisory", severity: "minor", description: "Winds of 25-35 mph with gusts up to 50 mph expected. Secure loose outdoor objects.", start: Date.now()/1000 + 7200, end: Date.now()/1000 + 28800, sender: "National Weather Service", areas: "Elevated Areas" },
-            { event: "Tornado Watch", severity: "extreme", description: "Conditions favorable for tornadoes. Be prepared to take shelter immediately if warning is issued.", start: Date.now()/1000, end: Date.now()/1000 + 21600, sender: "Storm Prediction Center", areas: "Entire County" }
-        ];
 
         let currentAlerts = [], currentFilter = 'all';
+
+        // Generate realistic alerts based on actual weather data
+        function generateAlertsFromWeather(weather, cityName) {
+            const alerts = [];
+            const temp = weather.main.temp;
+            const feelsLike = weather.main.feels_like;
+            const humidity = weather.main.humidity;
+            const windSpeed = weather.wind.speed * 3.6; // Convert to km/h
+            const weatherCondition = weather.weather[0].main.toLowerCase();
+            const weatherId = weather.weather[0].id;
+            const now = Date.now() / 1000;
+
+            // Extreme Cold (below -15°C)
+            if (temp < -15) {
+                alerts.push({
+                    event: "Extreme Cold Warning",
+                    severity: "extreme",
+                    description: `Dangerously cold temperatures of ${Math.round(temp)}°C. Frostbite can occur within minutes on exposed skin. Limit outdoor exposure and ensure heating systems are working.`,
+                    start: now, end: now + 43200,
+                    sender: "Weather Service", areas: cityName
+                });
+            }
+            // Cold Advisory (-15 to -5°C)
+            else if (temp < -5) {
+                alerts.push({
+                    event: "Cold Weather Advisory",
+                    severity: "moderate",
+                    description: `Cold temperatures of ${Math.round(temp)}°C expected. Dress in layers and limit time outdoors. Check on elderly neighbors and ensure pets are brought inside.`,
+                    start: now, end: now + 28800,
+                    sender: "Weather Service", areas: cityName
+                });
+            }
+            // Frost Advisory (-5 to 2°C)
+            else if (temp < 2 && temp >= -5) {
+                alerts.push({
+                    event: "Frost Advisory",
+                    severity: "minor",
+                    description: `Frost expected with temperatures near ${Math.round(temp)}°C. Protect sensitive plants and outdoor plumbing. Watch for icy patches on roads.`,
+                    start: now, end: now + 21600,
+                    sender: "Weather Service", areas: cityName
+                });
+            }
+
+            // Extreme Heat (above 40°C)
+            if (temp > 40) {
+                alerts.push({
+                    event: "Extreme Heat Warning",
+                    severity: "extreme",
+                    description: `Dangerous heat with temperatures reaching ${Math.round(temp)}°C (feels like ${Math.round(feelsLike)}°C). Heat stroke risk is very high. Stay indoors with air conditioning if possible.`,
+                    start: now, end: now + 32400,
+                    sender: "Weather Service", areas: cityName
+                });
+            }
+            // Heat Advisory (32-40°C)
+            else if (temp > 32) {
+                alerts.push({
+                    event: "Heat Advisory",
+                    severity: "moderate",
+                    description: `High temperatures of ${Math.round(temp)}°C (feels like ${Math.round(feelsLike)}°C). Stay hydrated, avoid strenuous outdoor activities during peak hours.`,
+                    start: now, end: now + 28800,
+                    sender: "Weather Service", areas: cityName
+                });
+            }
+
+            // High Wind (above 50 km/h)
+            if (windSpeed > 70) {
+                alerts.push({
+                    event: "High Wind Warning",
+                    severity: "severe",
+                    description: `Strong winds of ${Math.round(windSpeed)} km/h expected. Secure loose objects, avoid driving high-profile vehicles. Tree damage and power outages possible.`,
+                    start: now, end: now + 21600,
+                    sender: "Weather Service", areas: cityName
+                });
+            } else if (windSpeed > 50) {
+                alerts.push({
+                    event: "Wind Advisory",
+                    severity: "moderate",
+                    description: `Winds of ${Math.round(windSpeed)} km/h with gusts possible. Secure outdoor furniture and decorations. Exercise caution when driving.`,
+                    start: now, end: now + 18000,
+                    sender: "Weather Service", areas: cityName
+                });
+            }
+
+            // Thunderstorm (weather ID 200-232)
+            if (weatherId >= 200 && weatherId < 300) {
+                const severity = weatherId >= 210 && weatherId < 230 ? "severe" : "moderate";
+                alerts.push({
+                    event: severity === "severe" ? "Severe Thunderstorm Warning" : "Thunderstorm Watch",
+                    severity: severity,
+                    description: `Thunderstorms ${severity === "severe" ? "with lightning and possible hail" : ""} in the area. Seek shelter indoors, away from windows. Avoid open areas and tall isolated objects.`,
+                    start: now, end: now + 14400,
+                    sender: "Weather Service", areas: cityName
+                });
+            }
+
+            // Heavy Rain (weather ID 502-504 or 522)
+            if (weatherId === 502 || weatherId === 503 || weatherId === 504 || weatherId === 522) {
+                alerts.push({
+                    event: "Flash Flood Watch",
+                    severity: "moderate",
+                    description: `Heavy rainfall may cause flash flooding in low-lying areas. Avoid driving through flooded roads. Move to higher ground if flooding occurs.`,
+                    start: now, end: now + 21600,
+                    sender: "Weather Service", areas: cityName
+                });
+            }
+
+            // Snow (weather ID 600-622)
+            if (weatherId >= 600 && weatherId < 623) {
+                if (weatherId >= 615 || weatherId === 602) {
+                    alerts.push({
+                        event: "Winter Storm Warning",
+                        severity: "severe",
+                        description: `Heavy snow expected. Travel may become hazardous or impossible. Stock up on essentials and avoid unnecessary travel.`,
+                        start: now, end: now + 43200,
+                        sender: "Weather Service", areas: cityName
+                    });
+                } else {
+                    alerts.push({
+                        event: "Winter Weather Advisory",
+                        severity: "minor",
+                        description: `Snow is falling or expected. Roads may become slippery. Allow extra time for travel and drive with caution.`,
+                        start: now, end: now + 28800,
+                        sender: "Weather Service", areas: cityName
+                    });
+                }
+            }
+
+            // Fog (weather ID 741)
+            if (weatherId === 741 || (humidity > 95 && weatherCondition.includes('mist'))) {
+                alerts.push({
+                    event: "Dense Fog Advisory",
+                    severity: "minor",
+                    description: `Dense fog reducing visibility. Use low beam headlights while driving. Allow extra travel time and maintain safe following distance.`,
+                    start: now, end: now + 14400,
+                    sender: "Weather Service", areas: cityName
+                });
+            }
+
+            return alerts;
+        }
 
         function showState(state) {
             document.getElementById('loadingState').style.display = state === 'loading' ? 'block' : 'none';
@@ -456,16 +495,29 @@
             showState('loading');
             document.getElementById('currentLocation').style.display = 'none';
             try {
-                const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`);
-                const data = await res.json();
-                if (!data?.length) throw new Error('City not found');
-                await new Promise(r => setTimeout(r, 1000));
-                currentAlerts = sampleAlerts.sort(() => Math.random() - 0.5).slice(0, Math.floor(Math.random() * 4) + 1);
-                document.getElementById('locationName').textContent = `${data[0].name}, ${data[0].country}`;
+                // Get current weather for the city
+                const weatherRes = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${API_KEY}&units=metric`);
+                if (!weatherRes.ok) throw new Error('City not found');
+                const weatherData = await weatherRes.json();
+                
+                const cityName = `${weatherData.name}, ${weatherData.sys.country}`;
+                document.getElementById('locationName').textContent = cityName;
                 document.getElementById('currentLocation').style.display = 'flex';
-                if (currentAlerts.length) { updateStats(currentAlerts); renderAlerts(currentAlerts); showState('alerts'); }
-                else showState('no-alerts');
-            } catch (e) { alert('Error fetching alerts.'); showState('initial'); }
+                
+                // Generate alerts based on actual weather conditions
+                currentAlerts = generateAlertsFromWeather(weatherData, cityName);
+                
+                if (currentAlerts.length) { 
+                    updateStats(currentAlerts); 
+                    renderAlerts(currentAlerts); 
+                    showState('alerts'); 
+                } else {
+                    showState('no-alerts');
+                }
+            } catch (e) { 
+                alert('City not found. Please try another search.'); 
+                showState('initial'); 
+            }
         }
 
         document.querySelectorAll('.filter-btn').forEach(btn => {
@@ -479,7 +531,6 @@
 
         document.getElementById('searchBtn').addEventListener('click', searchAlerts);
         document.getElementById('locationInput').addEventListener('keypress', e => { if (e.key === 'Enter') searchAlerts(); });
-        document.getElementById('subscribeForm').addEventListener('submit', e => { e.preventDefault(); alert('Thank you for subscribing!'); e.target.reset(); });
         showState('initial');
     </script>
 </body>
