@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Maps - WeathCast</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --blur-medium: 20px;
+            --border-glass-bright: 1px solid rgba(255, 255, 255, 0.35);
+            --shadow-glass: 0 8px 32px rgba(31, 38, 135, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            --shadow-hover: 0 20px 40px rgba(41, 71, 124, 0.3), 0 0 80px rgba(118, 184, 255, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.7);
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #76B8FF 0%, #4A8AD4 40%, #29477C 100%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            overflow-x: hidden;
+        }
+
+        .bg-aurora {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0;
+        }
+
+        .bg-aurora::before {
+            content: ''; position: absolute; inset: 0;
+            background: 
+                radial-gradient(ellipse 90% 50% at 30% 10%, rgba(255, 255, 255, 0.35) 0%, transparent 50%),
+                radial-gradient(ellipse 70% 40% at 75% 20%, rgba(173, 216, 255, 0.3) 0%, transparent 50%),
+                radial-gradient(ellipse 80% 60% at 20% 70%, rgba(65, 105, 180, 0.25) 0%, transparent 50%);
+            animation: auroraPulse 15s ease-in-out infinite;
+        }
+
+        @keyframes auroraPulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+
+        .glass-etching {
+            position: fixed; inset: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+            opacity: 0.03; pointer-events: none; z-index: 0;
+        }
+
+        .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 20px; }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(var(--blur-medium));
+            -webkit-backdrop-filter: blur(var(--blur-medium));
+            border: var(--border-glass-bright);
+            border-radius: 24px;
+            box-shadow: var(--shadow-glass);
+            position: relative; overflow: hidden;
+        }
+
+        .glass-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+        }
+
+        header {
+            padding: 16px 28px; margin-bottom: 30px;
+            display: flex; align-items: center; justify-content: space-between;
+            animation: fadeInDown 0.8s ease-out;
+        }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .header-left { display: flex; align-items: center; gap: 40px; }
+        .logo { height: 48px; filter: drop-shadow(0 4px 12px rgba(41, 71, 124, 0.3)); transition: transform 0.3s ease; }
+        .logo:hover { transform: scale(1.05); }
+        .nav-links { display: flex; align-items: center; gap: 6px; }
+
+        .nav-link {
+            color: rgba(255, 255, 255, 0.8); text-decoration: none;
+            font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 600;
+            padding: 12px 20px; border-radius: 14px; transition: all 0.3s ease;
+            position: relative; letter-spacing: 0.3px;
+        }
+
+        .nav-link:hover { color: white; background: rgba(255, 255, 255, 0.12); }
+        .nav-link.active { color: white; background: rgba(255, 255, 255, 0.18); }
+        .nav-link.active::after {
+            content: ''; position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%);
+            width: 20px; height: 3px; background: white; border-radius: 2px;
+        }
+
+        .nav-link-badge { position: relative; }
+        .badge {
+            position: absolute; top: 6px; right: 6px; width: 8px; height: 8px;
+            background: #ff4757; border-radius: 50%; border: 2px solid rgba(118, 184, 255, 0.6);
+            animation: pulse-badge 2s infinite;
+        }
+
+        @keyframes pulse-badge { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.3); } }
+
+        .mobile-menu-btn {
+            display: none; background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.18); border-radius: 12px;
+            padding: 10px; cursor: pointer; color: white;
+        }
+        .mobile-menu-btn svg { width: 24px; height: 24px; }
+
+        .page-title { text-align: center; margin-bottom: 30px; animation: fadeInUp 0.8s ease-out; }
+        .page-title h1 {
+            font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 800;
+            margin-bottom: 12px; text-shadow: 0 4px 20px rgba(41, 71, 124, 0.3);
+        }
+        .page-title p { font-size: 16px; color: var(--text-secondary); }
+
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .map-controls { display: flex; flex-wrap: wrap; gap: 18px; margin-bottom: 22px; animation: fadeInUp 0.8s ease-out 0.2s both; }
+        .control-group { padding: 18px 22px; flex: 1; min-width: 280px; }
+        .control-label {
+            font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1.5px;
+            color: var(--text-secondary); margin-bottom: 12px; display: block;
+        }
+
+        .layer-buttons { display: flex; flex-wrap: wrap; gap: 10px; }
+
+        .layer-btn {
+            background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white; font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 600;
+            padding: 11px 18px; border-radius: 12px; cursor: pointer; transition: all 0.3s ease;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .layer-btn:hover { background: rgba(255, 255, 255, 0.2); }
+        .layer-btn.active { background: rgba(255, 255, 255, 0.25); border-color: rgba(255, 255, 255, 0.4); }
+        .layer-btn svg { width: 16px; height: 16px; }
+
+        .search-location { display: flex; gap: 10px; }
+        .search-input {
+            flex: 1; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 14px; padding: 13px 20px; font-size: 14px;
+            font-family: 'Outfit', sans-serif; color: white; transition: all 0.3s ease;
+        }
+        .search-input::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .search-input:focus { outline: none; background: rgba(255, 255, 255, 0.15); border-color: rgba(255, 255, 255, 0.4); }
+
+        .search-btn {
+            background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.25);
+            color: white; font-family: 'Syne', sans-serif; font-size: 14px; font-weight: 700;
+            padding: 13px 22px; border-radius: 14px; cursor: pointer; transition: all 0.3s ease;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .search-btn:hover { background: rgba(255, 255, 255, 0.3); transform: translateY(-2px); }
+        .search-btn svg { width: 18px; height: 18px; }
+
+        .map-wrapper { padding: 16px; animation: fadeInUp 0.8s ease-out 0.3s both; }
+        #map { height: 520px; border-radius: 18px; overflow: hidden; box-shadow: 0 15px 50px rgba(41, 71, 124, 0.3); }
+
+        .leaflet-control-zoom { border: none !important; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25) !important; }
+        .leaflet-control-zoom a {
+            background: rgba(255, 255, 255, 0.95) !important; color: #3A6FE6 !important;
+            border: none !important; width: 38px !important; height: 38px !important;
+            line-height: 38px !important; font-size: 18px !important; font-weight: 700 !important;
+        }
+        .leaflet-control-zoom a:first-child { border-radius: 12px 12px 0 0 !important; }
+        .leaflet-control-zoom a:last-child { border-radius: 0 0 12px 12px !important; }
+
+        .map-legend { padding: 22px; margin-top: 22px; animation: fadeInUp 0.8s ease-out 0.4s both; }
+        .legend-title { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; margin-bottom: 16px; }
+        .legend-color { width: 120px; height: 14px; border-radius: 7px; }
+        .legend-color.precipitation { background: linear-gradient(to right, #00ff00, #ffff00, #ff9900, #ff0000, #9900ff); }
+        .legend-color.clouds { background: linear-gradient(to right, transparent, rgba(200,200,200,0.9)); }
+        .legend-color.temperature { background: linear-gradient(to right, #0000ff, #00ffff, #00ff00, #ffff00, #ff0000); }
+        .legend-color.wind { background: linear-gradient(to right, #00ff00, #ffff00, #ff0000); }
+        .legend-color.pressure { background: linear-gradient(to right, #0066ff, #ffffff, #ff6600); }
+        .legend-labels { display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary); margin-top: 5px; width: 120px; }
+
+        .info-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 18px; margin-top: 30px; }
+        .info-card { padding: 28px; transition: all 0.4s ease; animation: fadeInUp 0.8s ease-out both; }
+        .info-card:nth-child(1) { animation-delay: 0.5s; }
+        .info-card:nth-child(2) { animation-delay: 0.6s; }
+        .info-card:nth-child(3) { animation-delay: 0.7s; }
+        .info-card:hover { transform: translateY(-5px); box-shadow: var(--shadow-hover); }
+
+        .info-card-icon {
+            width: 50px; height: 50px; background: rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 14px;
+            display: flex; align-items: center; justify-content: center; margin-bottom: 16px;
+        }
+        .info-card-icon svg { width: 24px; height: 24px; }
+        .info-card h3 { font-family: 'Syne', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 10px; }
+        .info-card p { font-size: 14px; color: var(--text-secondary); line-height: 1.7; }
+
+        footer { text-align: center; padding: 35px; color: var(--text-secondary); font-size: 13px; }
+        footer a { color: var(--text-primary); text-decoration: none; font-weight: 500; }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .mobile-menu-btn { display: flex; }
+            header { padding: 14px 20px; }
+            .logo { height: 40px; }
+            .page-title h1 { font-size: 28px; }
+            #map { height: 380px; }
+            .control-group { min-width: 100%; }
+            .search-location { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-aurora"></div>
+    <div class="glass-etching"></div>
+
+    <div class="container">
+        <header class="glass-card">
+            <div class="header-left">
+                <a href="index.html"><img src="logo.png" alt="WeathCast" class="logo"></a>
+                <nav class="nav-links">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="features.html" class="nav-link">Features</a>
+                    <a href="maps.html" class="nav-link active">Weather Maps</a>
+                    <a href="alerts.html" class="nav-link nav-link-badge">Alerts<span class="badge"></span></a>
+                </nav>
+            </div>
+            <button class="mobile-menu-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+        </header>
+
+        <div class="page-title">
+            <h1>🗺️ Weather Maps</h1>
+            <p>Explore real-time radar, satellite, and weather data visualizations</p>
+        </div>
+
+        <div class="map-controls">
+            <div class="control-group glass-card">
+                <label class="control-label">Map Layers</label>
+                <div class="layer-buttons">
+                    <button class="layer-btn active" data-layer="precipitation">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z"/></svg>
+                        Precipitation
+                    </button>
+                    <button class="layer-btn" data-layer="clouds">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+                        Clouds
+                    </button>
+                    <button class="layer-btn" data-layer="temp">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z"/></svg>
+                        Temperature
+                    </button>
+                    <button class="layer-btn" data-layer="wind">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2"/><path d="M9.6 4.6A2 2 0 1 1 11 8H2"/></svg>
+                        Wind
+                    </button>
+                    <button class="layer-btn" data-layer="pressure">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                        Pressure
+                    </button>
+                </div>
+            </div>
+            <div class="control-group glass-card">
+                <label class="control-label">Search Location</label>
+                <div class="search-location">
+                    <input type="text" class="search-input" id="locationInput" placeholder="Enter city name...">
+                    <button class="search-btn" id="searchLocationBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                        Go
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="map-wrapper glass-card"><div id="map"></div></div>
+
+        <div class="map-legend glass-card">
+            <h3 class="legend-title">Legend - Precipitation Intensity</h3>
+            <div><div class="legend-color precipitation" id="legendColor"></div><div class="legend-labels" id="legendLabels"><span>Light</span><span>Heavy</span></div></div>
+        </div>
+
+        <div class="info-cards">
+            <div class="info-card glass-card">
+                <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+                <h3>Real-Time Updates</h3>
+                <p>Weather data is refreshed every 10 minutes from global weather stations, satellites, and radar systems.</p>
+            </div>
+            <div class="info-card glass-card">
+                <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg></div>
+                <h3>Global Coverage</h3>
+                <p>Access weather map data for any location worldwide. Zoom in for detailed local views.</p>
+            </div>
+            <div class="info-card glass-card">
+                <div class="info-card-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></div>
+                <h3>Multiple Layers</h3>
+                <p>Switch between precipitation, clouds, temperature, wind speed, and pressure layers.</p>
+            </div>
+        </div>
+
+        <footer><p>Powered by <a href="https://openweathermap.org/">OpenWeatherMap</a> & <a href="https://leafletjs.com/">Leaflet</a></p></footer>
+    </div>
+
+    <script>
+        const API_KEY = '4d8fb5b93d4af21d66a2948710284366';
+        const layerConfig = {
+            precipitation: { url: `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=${API_KEY}`, legendClass: 'precipitation', legendTitle: 'Precipitation Intensity' },
+            clouds: { url: `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=${API_KEY}`, legendClass: 'clouds', legendTitle: 'Cloud Coverage' },
+            temp: { url: `https://tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=${API_KEY}`, legendClass: 'temperature', legendTitle: 'Temperature' },
+            wind: { url: `https://tile.openweathermap.org/map/wind_new/{z}/{x}/{y}.png?appid=${API_KEY}`, legendClass: 'wind', legendTitle: 'Wind Speed' },
+            pressure: { url: `https://tile.openweathermap.org/map/pressure_new/{z}/{x}/{y}.png?appid=${API_KEY}`, legendClass: 'pressure', legendTitle: 'Atmospheric Pressure' }
+        };
+
+        const map = L.map('map').setView([20, 0], 3);
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution: '©OSM ©CARTO', subdomains: 'abcd', maxZoom: 19 }).addTo(map);
+
+        let currentWeatherLayer = null;
+        function addWeatherLayer(type) {
+            if (currentWeatherLayer) map.removeLayer(currentWeatherLayer);
+            currentWeatherLayer = L.tileLayer(layerConfig[type].url, { opacity: 0.7, maxZoom: 19 }).addTo(map);
+            document.querySelector('.legend-title').textContent = `Legend - ${layerConfig[type].legendTitle}`;
+            document.getElementById('legendColor').className = `legend-color ${layerConfig[type].legendClass}`;
+        }
+        addWeatherLayer('precipitation');
+
+        document.querySelectorAll('.layer-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                addWeatherLayer(btn.dataset.layer);
+            });
+        });
+
+        async function searchLocation() {
+            const city = document.getElementById('locationInput').value.trim();
+            if (!city) return;
+            const res = await fetch(`https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${API_KEY}`);
+            const data = await res.json();
+            if (data?.length) {
+                map.flyTo([data[0].lat, data[0].lon], 8, { duration: 1.5 });
+                L.marker([data[0].lat, data[0].lon]).addTo(map).bindPopup(`<strong>${data[0].name}, ${data[0].country}</strong>`).openPopup();
+            }
+        }
+        document.getElementById('searchLocationBtn').addEventListener('click', searchLocation);
+        document.getElementById('locationInput').addEventListener('keypress', e => { if (e.key === 'Enter') searchLocation(); });
+        if (navigator.geolocation) navigator.geolocation.getCurrentPosition(p => map.setView([p.coords.latitude, p.coords.longitude], 6));
+    </script>
+</body>
+</html>
